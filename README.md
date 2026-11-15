@@ -1,6 +1,6 @@
-# FindCNQC v1.1
+# FindCNQC v1.2
 
-FindCNQC 面向跨境购物用户，提供商品发现、同一商品链接的历史仓库 QC、新手购物指南和代采平台入口。**公开目录只展示通过来源及商品身份校验、确有历史 QC 的商品**。这项校验不等于质量检查、真伪认证、库存确认或履约保证。
+FindCNQC 面向跨境购物用户，提供商品发现、同一商品链接的历史仓库 QC、新手购物指南和代采平台入口。公开目录包含有原始商品链接与展示图的商品；**历史仓库 QC 另外校验，缺少 QC 的商品提供 WhatsApp 咨询入口**。卖家展示图不计为 QC。来源校验不等于质量检查、真伪认证、库存确认或履约保证。
 
 正式站：[www.findcnqc.com](https://www.findcnqc.com)。社区：[FindCNQC Discord](https://discord.gg/fV7uQSbGQ)。首阶段以 WhatsApp **+852 6931 8767** 咨询为主要转化入口，不收款、不创建本站账号、不承诺尚未落实的优惠券。
 
@@ -14,7 +14,7 @@ npm test
 npm run build
 ```
 
-默认端口 4173，Render 使用 `PORT`。`/api/health` 返回 `version: "1.1.0"` 和当前公开商品数量；`/api/config` 返回公开设置、平台目录、参考汇率和公开目录总数。数量由实际导入内容和发布规则决定，不在文档或页面中写死。
+默认端口 4173，Render 使用 `PORT`。`/api/health` 返回 `version: "1.2.0"` 和当前公开商品数量；`/api/config` 返回公开设置、平台目录、参考汇率和公开目录总数。数量由实际导入内容和发布规则决定，不在文档或页面中写死。
 
 `npm test` 使用固定离线商品 fixture 验证后端接口，不依赖当前目录数量，也不访问外部 QC 服务。数据更新后仍应检查实际发布商品、图片和链接；代码测试不会证明第三方照片此刻可访问或当前库存有效。
 
@@ -22,11 +22,15 @@ npm run build
 
 `data/products.json` 是保留库，包含带来源的历史采集记录，不能把它的条数当成公开上架量。服务启动时由 `lib/catalog.mjs` 的 `publishCatalog()` 派生 `publishedProducts`，不修改原始记录。
 
-公开条件包括：
+`data/settings.json` 的 `catalogPolicy: "catalog-with-qc"` 发布完整目录；`"verified-qc-only"` 保留严格 QC 目录模式。两种模式均拒绝隐藏、排除或已报告售罄记录。
+
+完整目录条件包括：
 
 - `published` 不是 `false`，且 `stockStatus` 不是 `source-reports-sold-out`。
 - 市场类型、原商品 ID 与 `originalUrl` 一致；目前支持规范的 Weidian、Taobao、1688、Tmall 商品链接。
-- 至少一张 `qcPhotos` 有当前支持的明确来源 `repsapi.pl`，`sourceUrl` 精确对应 `https://repsapi.pl/items/{marketplace}/{sourceItemId}`。
+- 至少一张 HTTPS 商品展示图。
+
+历史 QC 另外要求：至少一张 `qcPhotos` 有当前支持的明确来源 `repsapi.pl`，`sourceUrl` 精确对应 `https://repsapi.pl/items/{marketplace}/{sourceItemId}`。严格 QC 模式还要求这一项。
 - QC 图片使用提供方公开的 HTTPS `/v1/photos/{token}.webp` 或 `.jpg` 路径。卖家图片、其他商品的 QC、来源不明的照片不能充数。
 
 同一商品的重复照片会去重。`qcAlbums` 和 `qcImages` 从可信照片重新清理；已有相册分组被保留，不因为同一天拍摄就合并不同订单。原商品 ID 用于跨来源去重。未知上架日期不能描述成“刚上新”，数据观察日期也不等于首次上架日期。
@@ -45,9 +49,15 @@ npm run build
 
 价格是来源快照。原币价与参考换算价分开；`data/fx.json` 使用 ECB 经 Frankfurter 发布的参考汇率，国际运费、境内运费、服务费及税费另行确认。目录中的平台不代表已建立合作、获得返佣资格或保证平台安全与可下单性。
 
+## 搜索与链接解析
+
+`/api/catalog` 搜索整个公开目录，支持标题、品牌、分类、原始商品 ID、原商品链接、支持的代采平台商品链接；Unicode、重音、常见品牌别名和部分多语言分类词会归一化。组合词匹配全部概念，价格、分类、QC 筛选和分页可组合使用。
+
+`/api/resolve-link?url=...` 只解析允许的原站与平台链接，不请求用户提供的任意 URL。匹配到本站商品时返回该商品；尚未收录时明确提示无结果并提供带原链接的 WhatsApp 咨询。它不是对所有中国电商或第三方 QC 数据库的实时搜索，也不保证任意链接都有 QC。
+
 ## Discord 社区与机器人
 
-当前邀请地址为 **https://discord.gg/fV7uQSbGQ**，配置在 `data/settings.json` 的顶层 `discordInvite`，通过 `/api/config` 公开。站内入口统一走 `/go/discord?placement=nav` 等路径。
+当前邀请地址为 [FindCNQC 永久邀请](https://discord.gg/fV7uQSbGQ)，配置在 `data/settings.json` 的顶层 `discordInvite`，通过 `/api/config` 公开。站内入口统一走 `/go/discord?placement=nav` 等路径。
 
 跳转仅接受配置中的 HTTPS `discord.gg/邀请码` 或 `discord.com/invite/邀请码`。请求参数不能提供或覆盖目的地址；配置缺失或格式不合法时返回 404。点击记录为 `discord_click`，不等于用户已经入群。
 
@@ -76,7 +86,7 @@ npm run build
 **日常追加或更新经审核 QC：**
 
 ```sh
-node scripts/merge-reviewed-qc.mjs path/to/approved-qc.json
+node scripts/merge-reviewed-qc.mjs path/to/approved-qc.json --incremental
 ```
 
 输入为商品数组或 `{ "items": [...] }`。保留库中的已有商品通过 `marketplace:sourceItemId` 合并，沿用原本站商品 ID；新的商品加入保留库。脚本保留已有来源和店铺信息，并应用 `data/curation.json` 中的人工设置。输入须先通过 `publishCatalog()`，无可信 QC 或标记售罄的条目不会被当成审核通过的新品。
@@ -85,7 +95,7 @@ node scripts/merge-reviewed-qc.mjs path/to/approved-qc.json
 
 审核文件应保留原始来源标题、可核查日期、规格／相册关系、售罄状态；`displayTitle` 可以简洁，但不得编造材质、性能或认证。封面必须从同一商品已有 QC 里选择。用户上传的照片需取得相应展示许可，不因公开发在 Discord 就自动获得站外转载许可。
 
-当前 `merge-reviewed-qc.mjs` 使用 **2026-11-16** 作为 `qcReviewBatch` 与快照日期，并会撤下同批次中未出现在新审核文件里的条目。因此当前输入应是这批审核的完整清单，而非任意零散补丁；后续批次执行前要先确认脚本的批次范围和日期。脚本不自动下载照片、不自动取得数据授权，也不抓取竞争站点。
+当前 `merge-reviewed-qc.mjs` 使用 **2026-11-16** 作为 `qcReviewBatch` 与快照日期。日常追加须加 `--incremental`，保留以前审核的商品；不加该参数为整批替换，会撤下同批次中未出现在输入清单里的条目。后续批次执行前要确认批次范围和日期。脚本不自动下载照片、不自动取得数据授权，也不抓取竞争站点。
 
 **完整重建旧来源保留库：**
 
@@ -99,7 +109,7 @@ node scripts/import-catalog.mjs path/to/catalog-a.json path/to/catalog-b.json
 
 ## 可选 QC 与店铺更新
 
-`REPSAPI_KEY` 仅放在服务端环境变量。配置后，已发布商品的详情请求可通过 [RepsAPI QC API](https://repsapi.pl/docs/qc) 查询更新；会校验商品身份、限制频率、缓存结果，并在失败时保留已有可信 QC。未配置时使用本地已经取得的历史图。**这不是全库持续刷新，也不会让无 QC 的隐藏商品自动上架**；新的审核内容需要导入与重新部署。
+`REPSAPI_KEY` 仅放在服务端环境变量。配置后，已发布商品的详情请求可通过 [RepsAPI QC API](https://repsapi.pl/docs/qc) 查询更新；会校验商品身份、限制频率、缓存结果，并在失败时保留已有可信 QC。未配置时使用本地已经取得的历史图。**这不是全库持续刷新，也不会让隐藏商品自动上架**；新的审核内容需要导入与重新部署。
 
 原商品链接与店铺链接分开。已有明确店铺链接时展示；缺少微店店铺链接时，后端可在限频和超时范围内从该商品公开页面读取真实店铺信息，不能从商品 ID 猜店铺 ID。访问受限时留空；`SELLER_LOOKUP=false` 可以停用在线店铺补充。
 
@@ -111,4 +121,4 @@ node scripts/import-catalog.mjs path/to/catalog-a.json path/to/catalog-b.json
 
 当前服务使用 `npm install --omit=dev && npm run build` 构建、`npm start` 启动、`/api/health` 检查。上传 GitHub 后，应核对 Render 部署的实际提交；不要假定自动部署已启用。Free 服务可能休眠并产生首次唤醒延迟。
 
-发布前按实际数据运行测试与构建；发布后核对 health 版本和公开数量、所有列表均有 QC、隐藏商品详情 404、详情完整相册、Discord／WhatsApp／Agent 跳转、原商品及店铺链接。商品、QC 和精选数量取运行时结果，不沿用上一版的统计。标记 `placement=production_check`、`qa`、`launch` 的测试点击应从投放分析中剔除。
+发布前按实际数据运行测试与构建；发布后核对 health 版本和公开数量、完整目录与仅有 QC 筛选各自计数正确、无 QC 商品卡片可咨询 WhatsApp、隐藏商品详情 404、详情完整相册、Discord／WhatsApp／Agent 跳转、原商品及店铺链接。商品、QC 和精选数量取运行时结果，不沿用上一版的统计。标记 `placement=production_check`、`qa`、`launch` 的测试点击应从投放分析中剔除。
