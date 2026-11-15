@@ -1,0 +1,14 @@
+{
+  "name": "findcnqc",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "build": "node bootstrap.mjs",
+    "start": "node bootstrap.mjs && node server.mjs",
+    "test": "node bootstrap.mjs && node --test tests/*.test.mjs"
+  }
+}
