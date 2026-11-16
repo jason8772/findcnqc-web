@@ -1,4 +1,4 @@
-# FindCNQC v1.2
+# FindCNQC v1.3
 
 FindCNQC 面向跨境购物用户，提供商品发现、同一商品链接的历史仓库 QC、新手购物指南和代采平台入口。公开目录包含有原始商品链接与展示图的商品；**历史仓库 QC 另外校验，缺少 QC 的商品提供 WhatsApp 咨询入口**。卖家展示图不计为 QC。来源校验不等于质量检查、真伪认证、库存确认或履约保证。
 
@@ -14,7 +14,7 @@ npm test
 npm run build
 ```
 
-默认端口 4173，Render 使用 `PORT`。`/api/health` 返回 `version: "1.2.1"` 和当前公开商品数量；`/api/config` 返回公开设置、平台目录、参考汇率和公开目录总数。数量由实际导入内容和发布规则决定，不在文档或页面中写死。
+默认端口 4173，Render 使用 `PORT`。`/api/health` 返回 `version: "1.3.0"` 和当前公开商品数量；`/api/config` 返回公开设置、平台目录、参考汇率和公开目录总数。数量由实际导入内容和发布规则决定，不在文档或页面中写死。
 
 `npm test` 使用固定离线商品 fixture 验证后端接口，不依赖当前目录数量，也不访问外部 QC 服务。数据更新后仍应检查实际发布商品、图片和链接；代码测试不会证明第三方照片此刻可访问或当前库存有效。
 
@@ -57,7 +57,7 @@ npm run build
 
 ## Discord 社区与机器人
 
-当前邀请地址为 [FindCNQC 永久邀请](https://discord.gg/fV7uQSbGQ)，配置在 `data/settings.json` 的顶层 `discordInvite`，通过 `/api/config` 公开。站内入口统一走 `/go/discord?placement=nav` 等路径。
+当前邀请地址为 [FindCNQC 永久邀请](https://discord.gg/fV7uQSbGQ)，配置在 `data/settings.json` 的顶层 `discordInvite`，通过 `/api/config` 公开。站内入口统一走 `/go/discord?placement=nav` 等路径。 导航、首屏社区条、目录横幅、手机菜单、页尾和浮动按钮共用同一配置；11 种语言同步显示社区说明，删除访客邀请码时同步清理这些链接上的旧来源码。
 
 跳转仅接受配置中的 HTTPS `discord.gg/邀请码` 或 `discord.com/invite/邀请码`。请求参数不能提供或覆盖目的地址；配置缺失或格式不合法时返回 404。点击记录为 `discord_click`，不等于用户已经入群。
 
@@ -88,6 +88,8 @@ npm run build
 ```sh
 node scripts/merge-reviewed-qc.mjs path/to/approved-qc.json --incremental
 ```
+
+增量前保留旧快照，合并后用 `node scripts/audit-incremental-catalog.mjs --before old-products.json --after data/products.json` 检查旧公开商品、商品 ID 和历史 QC 照片均未减少，并确认排除项未重新公开。
 
 输入为商品数组或 `{ "items": [...] }`。保留库中的已有商品通过 `marketplace:sourceItemId` 合并，沿用原本站商品 ID；新的商品加入保留库。脚本保留已有来源和店铺信息，并应用 `data/curation.json` 中的人工设置。输入须先通过 `publishCatalog()`，无可信 QC 或标记售罄的条目不会被当成审核通过的新品。
 
