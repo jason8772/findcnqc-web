@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: findcnqc
+    runtime: node
+    plan: 0.5c-512mb
+    buildCommand: npm install --omit=dev && npm run build
+    startCommand: npm start
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: NODE_VERSION
+        value: 24
+      - key: PUBLIC_ORIGIN
+        value: https://www.findcnqc.com

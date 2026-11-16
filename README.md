@@ -1,4 +1,4 @@
-# FindCNQC v1.3
+# FindCNQC v1.4
 
 FindCNQC 面向跨境购物用户，提供商品发现、同一商品链接的历史仓库 QC、新手购物指南和代采平台入口。公开目录包含有原始商品链接与展示图的商品；**历史仓库 QC 另外校验，缺少 QC 的商品提供 WhatsApp 咨询入口**。卖家展示图不计为 QC。来源校验不等于质量检查、真伪认证、库存确认或履约保证。
 
@@ -14,7 +14,7 @@ npm test
 npm run build
 ```
 
-默认端口 4173，Render 使用 `PORT`。`/api/health` 返回 `version: "1.3.0"` 和当前公开商品数量；`/api/config` 返回公开设置、平台目录、参考汇率和公开目录总数。数量由实际导入内容和发布规则决定，不在文档或页面中写死。
+默认端口 4173，Render 使用 `PORT`。`/api/health` 返回 `version: "1.4.0"` 和当前公开商品数量；`/api/config` 返回公开设置、平台目录、参考汇率和公开目录总数。数量由实际导入内容和发布规则决定，不在文档或页面中写死。
 
 `npm test` 使用固定离线商品 fixture 验证后端接口，不依赖当前目录数量，也不访问外部 QC 服务。数据更新后仍应检查实际发布商品、图片和链接；代码测试不会证明第三方照片此刻可访问或当前库存有效。
 
@@ -77,7 +77,7 @@ npm run build
 
 记录 `page_view`、`product_view`、`search`、`referral_saved`、`qc_view`、`whatsapp_click`、`agent_click`、`register_click`、`discord_click`。应用事件字段为时间、事件类型、公开商品 ID、平台 ID、来源码和入口位置；不保存完整 IP、电话号码、聊天内容或自由文本搜索词。托管平台自己的请求日志按其服务规则处理。
 
-事件写入 stdout（Render Logs 可见）和 `runtime/events.ndjson`。Render Free 的文件系统与内存不持久，重启会丢失本地文件／计数。长期统计需配置持久存储；`DATA_DIR` 可指定已挂载目录。`ANALYTICS_TOKEN` 配置后才能用 Bearer token 读取 `/api/admin/stats`，否则返回 401；不要把密钥放到网页或 URL。
+事件写入 stdout（Render Logs 可见）和 `runtime/events.ndjson`。Render 当前使用 0.5c-512mb 常驻实例（$7/月，按使用时间折算，其他用量另计），不因闲置进入免费实例休眠。当前未挂载持久磁盘，文件系统与内存不持久，重启会丢失本地文件／计数。长期统计需配置持久存储；`DATA_DIR` 可指定已挂载目录。`ANALYTICS_TOKEN` 配置后才能用 Bearer token 读取 `/api/admin/stats`，否则返回 401；不要把密钥放到网页或 URL。
 
 收藏、语言、币种与来源码保存在当前浏览器，不是服务端账号，不跨设备同步。优惠活动默认关闭；只有确定出资、适用范围与兑现规则后才启用 `promotion`。
 
@@ -121,6 +121,6 @@ node scripts/import-catalog.mjs path/to/catalog-a.json path/to/catalog-b.json
 
 本地源码为标准目录；`npm run build` 生成用于浏览器上传的 `deploy/` 包，由 `bootstrap.mjs` 在 Render 还原并运行服务器。只上传生成的部署文件，不上传 `.env`、事件日志、研究原始页面或浏览器资料。
 
-当前服务使用 `npm install --omit=dev && npm run build` 构建、`npm start` 启动、`/api/health` 检查。上传 GitHub 后，应核对 Render 部署的实际提交；不要假定自动部署已启用。Free 服务可能休眠并产生首次唤醒延迟。
+当前服务使用 `npm install --omit=dev && npm run build` 构建、`npm start` 启动、`/api/health` 检查。上传 GitHub 后，应核对 Render 部署的实际提交；不要假定自动部署已启用。当前使用已确认的 0.5c-512mb 常驻实例（$7/月）；免费实例的闲置休眠等待已消除。部署、重启或平台故障仍可能影响服务。
 
 发布前按实际数据运行测试与构建；发布后核对 health 版本和公开数量、完整目录与仅有 QC 筛选各自计数正确、无 QC 商品卡片可咨询 WhatsApp、隐藏商品详情 404、详情完整相册、Discord／WhatsApp／Agent 跳转、原商品及店铺链接。商品、QC 和精选数量取运行时结果，不沿用上一版的统计。标记 `placement=production_check`、`qa`、`launch` 的测试点击应从投放分析中剔除。
