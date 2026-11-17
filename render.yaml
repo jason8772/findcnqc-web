@@ -13,3 +13,19 @@ services:
         value: 24
       - key: PUBLIC_ORIGIN
         value: https://www.findcnqc.com
+      - key: ADMIN_ORIGIN
+        value: https://stats.findcnqc.com
+      - key: DATA_DIR
+        value: /var/data
+      - key: SELLER_LOOKUP
+        value: "false"
+      - key: ADMIN_USERNAME
+        sync: false
+      - key: ADMIN_PASSWORD_HASH
+        sync: false
+      - key: ADMIN_SESSION_SECRET
+        sync: false
+    disk:
+      name: findcnqc-analytics
+      mountPath: /var/data
+      sizeGB: 1

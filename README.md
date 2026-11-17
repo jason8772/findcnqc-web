@@ -1,4 +1,4 @@
-# FindCNQC v1.4.1
+# FindCNQC v1.5.0
 
 FindCNQC 面向跨境购物用户，提供商品发现、同一商品链接的历史仓库 QC、新手购物指南和代采平台入口。公开目录包含有原始商品链接与展示图的商品；**历史仓库 QC 另外校验，缺少 QC 的商品提供 WhatsApp 咨询入口**。卖家展示图不计为 QC。来源校验不等于质量检查、真伪认证、库存确认或履约保证。
 
@@ -6,7 +6,7 @@ FindCNQC 面向跨境购物用户，提供商品发现、同一商品链接的�
 
 ## 运行与发布检查
 
-Node.js 22 或更高，无第三方运行时依赖。
+Node.js 24 或更高，无第三方运行时依赖。
 
 ```sh
 npm start
@@ -14,7 +14,7 @@ npm test
 npm run build
 ```
 
-默认端口 4173，Render 使用 `PORT`。`/api/health` 返回 `version: "1.4.1"` 和当前公开商品数量；`/api/config` 返回公开设置、平台目录、参考汇率和公开目录总数。数量由实际导入内容和发布规则决定，不在文档或页面中写死。
+默认端口 4173，Render 使用 `PORT`。`/api/health` 返回 `version: "1.5.0"` 和当前公开商品数量；`/api/config` 返回公开设置、平台目录、参考汇率和公开目录总数。数量由实际导入内容和发布规则决定，不在文档或页面中写死。
 
 `npm test` 使用固定离线商品 fixture 验证后端接口，不依赖当前目录数量，也不访问外部 QC 服务。数据更新后仍应检查实际发布商品、图片和链接；代码测试不会证明第三方照片此刻可访问或当前库存有效。
 
@@ -81,7 +81,13 @@ npm run build
 
 记录 `page_view`、`product_view`、`search`、`referral_saved`、`qc_view`、`whatsapp_click`、`agent_click`、`register_click`、`discord_click`。应用事件字段为时间、事件类型、公开商品 ID、平台 ID、来源码和入口位置；不保存完整 IP、电话号码、聊天内容或自由文本搜索词。托管平台自己的请求日志按其服务规则处理。
 
-事件写入 stdout（Render Logs 可见）和 `runtime/events.ndjson`。Render 当前使用 0.5c-512mb 常驻实例（$7/月，按使用时间折算，其他用量另计），不因闲置进入免费实例休眠。当前未挂载持久磁盘，文件系统与内存不持久，重启会丢失本地文件／计数。长期统计需配置持久存储；`DATA_DIR` 可指定已挂载目录。`ANALYTICS_TOKEN` 配置后才能用 Bearer token 读取 `/api/admin/stats`，否则返回 401；不要把密钥放到网页或 URL。
+统计保存在 `DATA_DIR/analytics.sqlite`，生产环境挂载 `/var/data` 的 1GB Render 持久磁盘。使用 Node 24 内置 SQLite、WAL 与正常同步；启动和每小时生成一致性备份，保留 7 个每日文件。备份仍在同一磁盘，不是异地灾备。原始统计保留 90 天；生产不再追加无限增长的 `events.ndjson`。
+
+后台：[stats.findcnqc.com](https://stats.findcnqc.com)。账号通过 `ADMIN_USERNAME`、`ADMIN_PASSWORD_HASH`（`scrypt$saltHex$hashHex`）、`ADMIN_SESSION_SECRET`、`ADMIN_ORIGIN` 配置，密码不进入源码或网页。后台仅在配置的独立主机名开放；登录限频、Secure HttpOnly SameSite 会话、退出 CSRF 检查，会话 8 小时到期且重启后重新登录。公开主站上的后台接口返回 404。
+
+UV 按匿名第一方浏览器 Cookie 去重（90 天）；会话超过 30 分钟无活动重新计次。PV 包含商品详情虚拟页面。活跃停留仅累计可见页面且最近 60 秒内有交互的时间，每 15 秒上报；实时为最近 5 分钟活动，不能当作精确在线连接数。咨询和 Discord 统计的是点击，不代表发送消息、入群或成交。今日与每日按北京时间，周视图为含今天的近 7 天。数据从部署后开始记录，不回填历史；不记录 IP、完整来源 URL 或自由文本搜索，尊重 DNT/GPC 并排除已知机器人。
+
+验收访问应从 `/?qa=1` 进入，设置 1 小时 QA 标记，统计默认排除；后台可勾选包括测试流量验证。`/api/ready` 返回目录、统计存储和后台配置状态。存储出错时公开目录仍可访问，后台明确提示统计不可用。
 
 收藏、语言、币种与来源码保存在当前浏览器，不是服务端账号，不跨设备同步。优惠活动默认关闭；只有确定出资、适用范围与兑现规则后才启用 `promotion`。
 
@@ -90,7 +96,7 @@ npm run build
 **日常追加或更新经审核 QC：**
 
 ```sh
-node scripts/merge-reviewed-qc.mjs path/to/approved-qc.json --incremental
+node scripts/merge-reviewed-qc.mjs path/to/approved-qc.json --incremental --batch=2026-11-17
 ```
 
 增量前保留旧快照，合并后用 `node scripts/audit-incremental-catalog.mjs --before old-products.json --after data/products.json` 检查旧公开商品、商品 ID 和历史 QC 照片均未减少，并确认排除项未重新公开。
@@ -101,7 +107,7 @@ node scripts/merge-reviewed-qc.mjs path/to/approved-qc.json --incremental
 
 审核文件应保留原始来源标题、可核查日期、规格／相册关系、售罄状态；`displayTitle` 可以简洁，但不得编造材质、性能或认证。封面必须从同一商品已有 QC 里选择。用户上传的照片需取得相应展示许可，不因公开发在 Discord 就自动获得站外转载许可。
 
-当前 `merge-reviewed-qc.mjs` 使用 **2026-11-16** 作为 `qcReviewBatch` 与快照日期。日常追加须加 `--incremental`，保留以前审核的商品；不加该参数为整批替换，会撤下同批次中未出现在输入清单里的条目。后续批次执行前要确认批次范围和日期。脚本不自动下载照片、不自动取得数据授权，也不抓取竞争站点。
+`merge-reviewed-qc.mjs` 接受 `--batch=YYYY-MM-DD`，默认 UTC 当天；正式批次显式填写审核日期。日常追加须加 `--incremental`，保留以前审核商品、历史照片和相册。已明确排除或售罄的旧记录不会被追加输入重新公开。不加该参数为整批替换，会撤下相同批次中未出现在输入清单里的条目。脚本不自动下载照片、不自动取得数据授权，也不抓取竞争站点。
 
 **完整重建旧来源保留库：**
 
@@ -117,7 +123,7 @@ node scripts/import-catalog.mjs path/to/catalog-a.json path/to/catalog-b.json
 
 `REPSAPI_KEY` 仅放在服务端环境变量。配置后，已发布商品的详情请求可通过 [RepsAPI QC API](https://repsapi.pl/docs/qc) 查询更新；会校验商品身份、限制频率、缓存结果，并在失败时保留已有可信 QC。未配置时使用本地已经取得的历史图。**这不是全库持续刷新，也不会让隐藏商品自动上架**；新的审核内容需要导入与重新部署。
 
-原商品链接与店铺链接分开。已有明确店铺链接时展示；缺少微店店铺链接时，后端可在限频和超时范围内从该商品公开页面读取真实店铺信息，不能从商品 ID 猜店铺 ID。访问受限时留空；`SELLER_LOOKUP=false` 可以停用在线店铺补充。
+原商品链接与店铺链接分开。已有明确店铺链接时展示；缺少微店店铺链接时，后端可在限频和超时范围内从该商品公开页面读取真实店铺信息，不能从商品 ID 猜店铺 ID。访问受限时留空；生产已设置 `SELLER_LOOKUP=false`，避免详情请求等待外站；已有店铺链接照常展示。
 
 ## 部署
 
@@ -125,6 +131,6 @@ node scripts/import-catalog.mjs path/to/catalog-a.json path/to/catalog-b.json
 
 本地源码为标准目录；`npm run build` 生成用于浏览器上传的 `deploy/` 包，由 `bootstrap.mjs` 在 Render 还原并运行服务器。只上传生成的部署文件，不上传 `.env`、事件日志、研究原始页面或浏览器资料。
 
-当前服务使用 `npm install --omit=dev && npm run build` 构建、`npm start` 启动、`/api/health` 检查。上传 GitHub 后，应核对 Render 部署的实际提交；不要假定自动部署已启用。当前使用已确认的 0.5c-512mb 常驻实例（$7/月）；免费实例的闲置休眠等待已消除。部署、重启或平台故障仍可能影响服务。
+当前服务使用 `npm install --omit=dev && npm run build` 构建、`npm start` 启动、`/api/health` 检查。上传 GitHub 后，应核对 Render 部署的实际提交；不要假定自动部署已启用。当前使用已确认的 0.5c-512mb 常驻实例（$7/月）；免费实例的闲置休眠等待已消除。统计域名新增 $0.25/月，1GB 磁盘 $0.25/月，其他用量另计。挂载磁盘后 Render 不支持零停机部署，更新/重启存在短暂停机窗口；当前是单实例，不是高可用架构。
 
 发布前按实际数据运行测试与构建；发布后核对 health 版本和公开数量、完整目录与仅有 QC 筛选各自计数正确、无 QC 商品卡片可咨询 WhatsApp、隐藏商品详情 404、详情完整相册、Discord／WhatsApp／Agent 跳转、原商品及店铺链接。商品、QC 和精选数量取运行时结果，不沿用上一版的统计。标记 `placement=production_check`、`qa`、`launch` 的测试点击应从投放分析中剔除。
