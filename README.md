@@ -1,6 +1,6 @@
-# FindCNQC v1.6.0
+# FindCNQC v1.7.0
 
-FindCNQC 面向跨境购物用户，提供商品发现、同一商品链接的历史仓库 QC、新手购物指南和代采平台入口。公开目录包含有原始商品链接与展示图的商品；**历史仓库 QC 另外校验，缺少 QC 的商品提供 WhatsApp 咨询入口**。卖家展示图不计为 QC。来源校验不等于质量检查、真伪认证、库存确认或履约保证。
+FindCNQC 面向跨境购物用户，提供商品发现、同一商品链接的历史仓库 QC、新手购物指南和 CNBUY 购买入口。公开目录包含有原始商品链接与展示图的商品；**历史仓库 QC 另外校验，缺少 QC 的商品提供 WhatsApp 咨询入口**。卖家展示图不计为 QC。来源校验不等于质量检查、真伪认证、库存确认或履约保证。
 
 正式站：[www.findcnqc.com](https://www.findcnqc.com)。社区：[FindCNQC Discord](https://discord.gg/fV7uQSbGQ)。首阶段以 WhatsApp **+852 6931 8767** 咨询为主要转化入口，不收款、不创建本站账号、不承诺尚未落实的优惠券。
 
@@ -14,7 +14,7 @@ npm test
 npm run build
 ```
 
-默认端口 4173，Render 使用 `PORT`。`/api/health` 返回 `version: "1.6.0"` 和当前公开商品数量；`/api/config` 返回公开设置、平台目录、参考汇率和公开目录总数。数量由实际导入内容和发布规则决定，不在文档或页面中写死。
+默认端口 4173，Render 使用 `PORT`。`/api/health` 返回 `version: "1.7.0"` 和当前公开商品数量；`/api/config` 返回公开设置、平台目录、参考汇率和公开目录总数。数量由实际导入内容和发布规则决定，不在文档或页面中写死。
 
 `npm test` 使用固定离线商品 fixture 验证后端接口，不依赖当前目录数量，也不访问外部 QC 服务。数据更新后仍应检查实际发布商品、图片和链接；代码测试不会证明第三方照片此刻可访问或当前库存有效。
 
@@ -51,7 +51,7 @@ npm run build
 
 2026-11-16 的 RepsAPI 官方 Playground 试用为 12 件原本没有 QC 的已收录商品补充了 261 张照片、66 个相册。原有商品、QC、价格与源头链接保留。该轮是人工审核后导入的样本，不是完整第三方数据库导出；生产服务尚未启用 RepsAPI 密钥或每日自动补全任务。
 
-价格是来源快照。原币价与参考换算价分开；`data/fx.json` 使用 ECB 经 Frankfurter 发布的参考汇率，国际运费、境内运费、服务费及税费另行确认。目录中的平台不代表已建立合作、获得返佣资格或保证平台安全与可下单性。
+价格是来源快照。原币价与参考换算价分开；`data/fx.json` 中原有币种使用 ECB 经 Frankfurter 发布的参考汇率；RUB 使用俄罗斯央行 2026-11-21 的快照（1 CNY = 12.2759 RUB），单独记录日期与来源，国际运费、境内运费、服务费及税费另行确认。目录中的平台不代表已建立合作、获得返佣资格或保证平台安全与可下单性。
 
 ## 搜索与链接解析
 
@@ -59,9 +59,19 @@ npm run build
 
 `/api/resolve-link?url=...` 只解析允许的原站与平台链接，不请求用户提供的任意 URL。匹配到本站商品时返回该商品；尚未收录时明确提示无结果并提供带原链接的 WhatsApp 咨询。它不是对所有中国电商或第三方 QC 数据库的实时搜索，也不保证任意链接都有 QC。
 
+## CNBUY、俄语与 Telegram
+
+v1.7 只展示 [CNBUY](https://cnbuy.pro/)；其他代采平台出站路由返回 404。CNBUY 登录／注册页为 `https://cnbuy.pro/#/account`。通用源商品到 CNBUY 内部商品 ID 的映射尚未验证，所以详情引导先复制淘宝／微店／1688 原链接，再打开 CNBUY 粘贴查询，不能虚构商品深链。原商品与店铺链接、历史 QC 归属仍保留。
+
+俄语包为 `public/locales-ru.js`，支持俄语浏览器初始识别与手动选择，已有语言／币种偏好优先。RUB 使用独立参考汇率与日期，显示和价格筛选采用一致换算；它是参考展示，不承诺以卢布结算。常见俄语分类关键词可搜索。
+
+Telegram 私聊：[cnbuyjason](https://t.me/cnbuyjason)；频道：[CNBUY Official](https://t.me/cnbuy_pro)。分别配置 `telegramContact`、`telegramChannel`，站内跳转为 `/go/telegram` 与 `/go/telegram-channel`。按钮覆盖首页、帮助区、手机菜单、页尾和商品详情；配置缺失时隐藏。目的链接仅使用已校验配置，访客不能覆盖；邀请码和商品上下文只留在本站统计，不附加至最终 Telegram 地址。
+
+`telegram_click` 与 `telegram_channel_click` 由服务器分别记录，客户端不能伪造同名出站事件。后台显示两类点击、UV、点击率，并按日期、国家、来源和商品分析；点击不代表已发送消息或订阅频道。
+
 ## Discord 社区与机器人
 
-当前邀请地址为 [FindCNQC 永久邀请](https://discord.gg/fV7uQSbGQ)，配置在 `data/settings.json` 的顶层 `discordInvite`，通过 `/api/config` 公开。站内入口统一走 `/go/discord?placement=nav` 等路径。 导航、首屏社区条、目录横幅、手机菜单、页尾和浮动按钮共用同一配置；11 种语言同步显示社区说明，删除访客邀请码时同步清理这些链接上的旧来源码。
+当前邀请地址为 [FindCNQC 永久邀请](https://discord.gg/fV7uQSbGQ)，配置在 `data/settings.json` 的顶层 `discordInvite`，通过 `/api/config` 公开。站内入口统一走 `/go/discord?placement=nav` 等路径。 导航、首屏社区条、目录横幅、手机菜单、页尾和浮动按钮共用同一配置；12 种语言同步显示社区说明，删除访客邀请码时同步清理这些链接上的旧来源码。
 
 跳转仅接受配置中的 HTTPS `discord.gg/邀请码` 或 `discord.com/invite/邀请码`。请求参数不能提供或覆盖目的地址；配置缺失或格式不合法时返回 404。点击记录为 `discord_click`，不等于用户已经入群。
 
